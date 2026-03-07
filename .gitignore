@@ -1,0 +1,118 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables (contains API keys and secrets)
+.env
+.env.local
+.env.production
+.env.staging
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Data directories (contains sensitive student submissions and processed data)
+data/cache/*
+data/processed/*
+data/index/*
+data/raw_submissions/*
+!data/cache/.gitkeep
+!data/processed/.gitkeep
+!data/index/.gitkeep
+!data/raw_submissions/.gitkeep
+
+# Database files (may contain indexed student work)
+*.db
+*.sqlite
+*.sqlite3
+chroma.sqlite3
+
+# Logs (may contain API keys or sensitive information)
+*.log
+pipeline.log
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# External dependencies and binary distributions
+Release-*/
+*.zip
+*.tar.gz
+*.rar
+
+# Tesseract OCR data files (large, should be installed separately)
+Tesseract OCR/
+tesseract/
+*.traineddata
+
+# Model files and weights (large files that should be downloaded separately)
+models/
+*.pt
+*.pth
+*.bin
+*.onnx
+*.pkl
+*.pickle
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Virtual environments
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
