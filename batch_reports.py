@@ -7,6 +7,7 @@ Optimized for grading 100+ submissions with:
 - Template-based evaluation
 - Automated scoring
 - Feedback standardization
+- Multi-industry rubrics
 
 USAGE:
     generator = BatchReportGenerator()
@@ -52,7 +53,7 @@ class DocumentReport:
     """Comprehensive report for a single document"""
     doc_id: str
     document_name: str
-    student_id: Optional[str]
+    author_id: Optional[str]
     generated_at: datetime
     overall_score: float
     max_score: float
@@ -254,7 +255,7 @@ class BatchReportGenerator:
         report = DocumentReport(
             doc_id=doc_id,
             document_name=metadata.get('filename', doc_id),
-            student_id=metadata.get('student_id'),
+            author_id=metadata.get('author_id') or metadata.get('student_id') or metadata.get('source_id'),
             generated_at=datetime.now(),
             overall_score=total_score,
             max_score=total_max,
@@ -436,7 +437,7 @@ Be specific and reference the text. Give partial credit where appropriate."""
                     f.write(f"EVALUATION REPORT\n")
                     f.write(f"=" * 60 + "\n\n")
                     f.write(f"Document: {report.document_name}\n")
-                    f.write(f"Student ID: {report.student_id or 'N/A'}\n")
+                    f.write(f"Author/Source ID: {report.author_id or 'N/A'}\n")
                     f.write(f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                     f.write(f"{report.summary}\n\n")
                     f.write(f"STRENGTHS:\n")
@@ -461,7 +462,7 @@ Be specific and reference the text. Give partial credit where appropriate."""
                 
                 # Header
                 writer.writerow([
-                    'Document ID', 'Document Name', 'Student ID',
+                    'Document ID', 'Document Name', 'Author/Source ID',
                     'Overall Score', 'Max Score', 'Percentage',
                     'Summary', 'Strengths', 'Areas for Improvement'
                 ])
@@ -472,7 +473,7 @@ Be specific and reference the text. Give partial credit where appropriate."""
                     writer.writerow([
                         report.doc_id,
                         report.document_name,
-                        report.student_id or 'N/A',
+                        report.author_id or 'N/A',
                         f"{report.overall_score:.1f}",
                         report.max_score,
                         f"{percentage:.1f}%",

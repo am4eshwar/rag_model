@@ -4,8 +4,8 @@ All hyperparameters, model choices, and tunable settings in one place.
 
 RATIONALE FOR EACH PARAMETER:
 - Embedding model: all-MiniLM-L6-v2 chosen for 384-dim (low memory), fast inference
-- Chunk size: 512 chars ≈ 128 tokens, optimal for student submissions (paragraphs)
-- Overlap: 25% (128/512) prevents semantic boundary cuts
+- Chunk size: 1000 chars ≈ 250 tokens, optimal for general documents
+- Overlap: 20% (200/1000) prevents semantic boundary cuts
 - HNSW M: 16 = good balance (higher = more accuracy but slower + more memory)
 - HNSW ef_construction: 200 = build quality (higher = better recall at indexing time)
 - HNSW ef_search: 50 = query-time recall (increase if recall@20 < 0.85)
@@ -15,13 +15,17 @@ RATIONALE FOR EACH PARAMETER:
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from a single .env file at the root
+load_dotenv()
 
 # ==============================================================================
 # DIRECTORY PATHS
 # ==============================================================================
 BASE_DIR = Path(__file__).parent.resolve()
 DATA_DIR = BASE_DIR / "data"
-RAW_DOCS_DIR = DATA_DIR / "raw_submissions"
+RAW_DOCS_DIR = DATA_DIR / "documents"
 PROCESSED_DIR = DATA_DIR / "processed"
 INDEX_DIR = DATA_DIR / "index"
 CACHE_DIR = DATA_DIR / "cache"

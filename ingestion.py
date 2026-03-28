@@ -49,6 +49,7 @@ except ImportError:
     PYTESSERACT_AVAILABLE = False
     pytesseract = None
     convert_from_path = None
+    Image = None
 
 try:
     import easyocr
@@ -330,7 +331,7 @@ class DocumentIngester:
             logger.error(f"OCR processing failed: {e}")
             return "", []
     
-    def _apply_easyocr_to_image(self, image: Image.Image) -> str:
+    def _apply_easyocr_to_image(self, image: "Image.Image") -> str:
         """
         Apply EasyOCR to image for handwriting recognition
         

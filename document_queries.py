@@ -10,8 +10,8 @@ Essential for Google Classroom integration where teachers need to:
 FEATURES:
 - Document-filtered retrieval
 - Multi-document queries
-- Student-specific context isolation
-- Metadata-based filtering
+- Metadata-based context isolation
+- Flexible metadata filtering
 
 USAGE:
     # Query single document
@@ -20,8 +20,8 @@ USAGE:
     # Query multiple documents
     results = query_documents(doc_ids=["doc1", "doc2"], query="Compare thesis statements")
     
-    # Query all documents by student
-    results = query_by_student(student_id="student_123", query="Analyze writing style")
+    # Query all documents by metadata (e.g., author)
+    results = query_by_metadata(key="author", value="John Doe", query="Analyze writing style")
 """
 
 import logging
@@ -192,33 +192,35 @@ class DocumentQuerySystem:
         logger.info(f"Completed queries for {len(results)} documents")
         return results
     
-    def query_by_student(
+    def query_by_metadata(
         self,
-        student_id: str,
+        key: str,
+        value: str,
         query: str,
         top_k: int = FINAL_TOP_K,
     ) -> List[DocumentQueryResult]:
         """
-        Query all documents submitted by a specific student
+        Query all documents matching a specific metadata key-value pair
         
         Args:
-            student_id: Student identifier
+            key: Metadata key to filter by (e.g., "author", "source", "student_id")
+            value: Value to match
             query: Query text
             top_k: Results per document
             
         Returns:
-            List of results for all student's documents
+            List of results for all matching documents
         """
-        logger.info(f"Querying all documents for student: {student_id}")
+        logger.info(f"Querying all documents for {key}: {value}")
         
-        # Get all documents for this student
-        doc_ids = self._get_student_documents(student_id)
+        # Get all documents with this metadata
+        doc_ids = self._get_documents_by_metadata(key, value)
         
         if not doc_ids:
-            logger.warning(f"No documents found for student: {student_id}")
+            logger.warning(f"No documents found for {key}: {value}")
             return []
         
-        logger.info(f"Found {len(doc_ids)} documents for student")
+        logger.info(f"Found {len(doc_ids)} matching documents")
         return self.query_multiple_documents(doc_ids, query, top_k)
     
     def compare_documents(
@@ -277,15 +279,15 @@ class DocumentQuerySystem:
             logger.error(f"Error getting document chunks: {e}")
             return []
     
-    def _get_student_documents(self, student_id: str) -> List[str]:
-        """Get all document IDs for a student"""
+    def _get_documents_by_metadata(self, key: str, value: str) -> List[str]:
+        """Get all document IDs matching a metadata key-value pair"""
         try:
-            # Query with student filter
+            # Query with metadata filter
             dummy_embedding = np.zeros(self.embedder.model.get_sentence_embedding_dimension())
             _, _, _, metadatas = self.vector_store.query(
                 dummy_embedding,
                 n_results=1000,
-                where={"student_id": student_id}
+                where={key: value}
             )
             
             # Extract unique document IDs
@@ -296,7 +298,7 @@ class DocumentQuerySystem:
             
             return list(doc_ids)
         except Exception as e:
-            logger.error(f"Error getting student documents: {e}")
+            logger.error(f"Error getting documents for {key}={value}: {e}")
             return []
     
     def get_document_info(self, doc_id: str) -> Optional[Dict]:

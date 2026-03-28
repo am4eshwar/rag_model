@@ -11,8 +11,11 @@ SETUP STEPS:
 
 USAGE:
 - Build index: python main.py --build
-- Query: python main.py --query "What is the main topic?"
+- Query: python main.py --query "Main conclusion?"
 - Interactive: python main.py --interactive
+
+NEW: For advanced features (batch processing, analytics, similarity detection), use:
+    python rag_orchestrator.py --help
 """
 
 import logging
@@ -281,10 +284,10 @@ def main():
         # Default: show help
         parser.print_help()
         print("\nQuick start:")
-        print("  1. Place PDF/DOCX files in: data/raw_submissions/")
+        print("  1. Place PDF/DOCX files in: data/documents/")
         print("  2. Build index: python main.py --build")
         print("  3. Query: python main.py --query \"What is the main topic?\"")
-        print("  4. Interactive: python main.py --interactive")
+        print("  4. For advanced features (reports, similarity, analytics), use: python rag_orchestrator.py")
 
 
 if __name__ == "__main__":

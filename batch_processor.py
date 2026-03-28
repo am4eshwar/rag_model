@@ -17,7 +17,7 @@ DESIGN FOR SCALE:
 
 USAGE:
     processor = BatchProcessor()
-    batch_id = processor.create_batch(file_paths, assignment_name="Essay 1")
+    batch_id = processor.create_batch(file_paths, batch_name="Research Docs")
     processor.process_batch(batch_id, parallel_workers=4)
     status = processor.get_batch_status(batch_id)
 """
