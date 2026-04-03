@@ -8,9 +8,8 @@ Handles extraction of text from student submissions using LangChain document loa
 
 OCR SUPPORT:
 - Detects scanned PDFs (minimal extractable text)
-- pytesseract: Fast OCR for printed/typed text
-- EasyOCR: Deep learning OCR for handwritten text
-- Automatic fallback: Tries normal extraction → pytesseract → EasyOCR
+- EasyOCR: Deep learning OCR for handwritten & printed text
+- Automatic fallback: Tries normal extraction → EasyOCR
 
 RATIONALE:
 - LangChain document loaders: Unified interface, built-in metadata extraction
@@ -41,13 +40,11 @@ except ImportError:
 
 # OCR dependencies
 try:
-    import pytesseract
     from pdf2image import convert_from_path
     from PIL import Image
-    PYTESSERACT_AVAILABLE = True
+    PDF2IMAGE_AVAILABLE = True
 except ImportError:
-    PYTESSERACT_AVAILABLE = False
-    pytesseract = None
+    PDF2IMAGE_AVAILABLE = False
     convert_from_path = None
     Image = None
 
@@ -119,8 +116,7 @@ class DocumentIngester:
     OCR WORKFLOW:
     1. Try normal text extraction
     2. If text < threshold → detect as scanned
-    3. Try pytesseract (fast, good for printed text)
-    4. If still poor quality → try EasyOCR (handwriting)
+    3. Apply EasyOCR (deep learning model)
     """
     
     def __init__(self):
@@ -216,7 +212,7 @@ class DocumentIngester:
         - PyPDFLoader automatically extracts text page-by-page
         - Each page becomes a LangChain Document with metadata
         - If text extraction yields < threshold chars → apply OCR
-        - OCR tries: pytesseract (fast, printed) → EasyOCR (handwriting)
+        - OCR uses EasyOCR (for both handwriting and printed text)
         """
         try:
             # Step 1: Try normal text extraction
@@ -268,56 +264,45 @@ class DocumentIngester:
         
         STRATEGY:
         1. Convert PDF pages to images
-        2. Try pytesseract first (fast, good for printed text)
-        3. If confidence low, try EasyOCR (better for handwriting)
+        2. Apply EasyOCR (robust for handwriting and text)
         
         Returns:
             Tuple of (full_text, pages_list)
         """
-        if not PYTESSERACT_AVAILABLE:
-            logger.warning("pytesseract not available, OCR disabled")
+        if not PDF2IMAGE_AVAILABLE or not EASYOCR_AVAILABLE:
+            logger.warning("pdf2image or easyocr not available, OCR disabled")
             return "", []
         
         try:
             # Convert PDF to images
             logger.info(f"Converting PDF to images at {OCR_DPI} DPI...")
-            images = convert_from_path(str(file_path), dpi=OCR_DPI)
+            
+            # Use local poppler if present
+            poppler_path = r'C:\program RAG model\Release-25.12.0-0\Library\bin'
+            if not Path(poppler_path).exists():
+                poppler_path = None
+                
+            images = convert_from_path(str(file_path), dpi=OCR_DPI, poppler_path=poppler_path)
             
             pages = []
             full_text = []
             
             for page_num, image in enumerate(images, start=1):
-                logger.info(f"Processing page {page_num}/{len(images)} with OCR...")
+                logger.info(f"Processing page {page_num}/{len(images)} with EasyOCR...")
                 
-                # Try pytesseract first (fast, good for printed)
                 try:
-                    page_text = pytesseract.image_to_string(
-                        image,
-                        lang=OCR_LANGUAGE,
-                        config='--psm 3'  # Fully automatic page segmentation
-                    )
-                    
-                    # Check if text quality is good
-                    if len(page_text.strip()) < 50 and USE_EASYOCR_FOR_HANDWRITING:
-                        # Low quality, try EasyOCR for handwriting
-                        logger.info(f"Page {page_num}: pytesseract low quality, trying EasyOCR...")
-                        page_text = self._apply_easyocr_to_image(image)
+                    # Apply EasyOCR for text extraction
+                    page_text = self._apply_easyocr_to_image(image)
                     
                 except Exception as e:
-                    logger.error(f"pytesseract failed on page {page_num}: {e}")
-                    
-                    # Fallback to EasyOCR
-                    if USE_EASYOCR_FOR_HANDWRITING:
-                        logger.info(f"Falling back to EasyOCR for page {page_num}...")
-                        page_text = self._apply_easyocr_to_image(image)
-                    else:
-                        page_text = ""
+                    logger.error(f"EasyOCR failed on page {page_num}: {e}")
+                    page_text = ""
                 
                 pages.append({
                     "page_num": page_num,
                     "text": page_text,
                     "char_count": len(page_text),
-                    "metadata": {"ocr": True, "method": "pytesseract or easyocr"},
+                    "metadata": {"ocr": True, "method": "easyocr"},
                 })
                 
                 full_text.append(page_text)

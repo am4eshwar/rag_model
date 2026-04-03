@@ -500,12 +500,30 @@ class BatchProcessor:
                 pages=doc.pages,
                 metadata=doc.metadata
             )
+            
+            if not chunks:
+                logger.warning(f"No text extracted from {job.filename}. Skipping embedding/storage.")
+                job.status = ProcessingStatus.SKIPPED
+                job.progress = 1.0
+                job.end_time = datetime.now()
+                self.db.update_document_job(job)
+                return True # Skip but count as processed
+                
             job.chunks_count = len(chunks)
             job.progress = 0.5
             self.db.update_document_job(job)
             
             # Step 3: Embed
             chunk_ids, embeddings = embed_chunks(chunks, use_cache=True)
+            
+            if len(embeddings) == 0:
+                logger.warning(f"No embeddings generated for {job.filename}. Skipping storage.")
+                job.status = ProcessingStatus.SKIPPED
+                job.progress = 1.0
+                job.end_time = datetime.now()
+                self.db.update_document_job(job)
+                return True
+
             job.progress = 0.8
             self.db.update_document_job(job)
             

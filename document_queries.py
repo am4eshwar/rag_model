@@ -148,8 +148,22 @@ class DocumentQuerySystem:
         
         # Rerank if enabled
         if self.reranker and len(results) > 0:
-            logger.info("Reranking results...")
-            results = self.reranker.rerank(query, results, top_k=top_k)
+            logger.info(f"Reranking {len(results)} results...")
+            # Extract texts for reranker
+            texts = [r.text for r in results]
+            
+            # Rerank
+            indices, scores = self.reranker.rerank(query, texts, top_k=top_k)
+            
+            # Re-order and update results
+            reranked_results = []
+            for i, (idx, score) in enumerate(zip(indices, scores)):
+                res = results[idx]
+                res.score = score
+                res.rank = i
+                res.retrieval_stage = "reranked"
+                reranked_results.append(res)
+            results = reranked_results
         else:
             results = results[:top_k]
         

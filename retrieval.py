@@ -188,6 +188,12 @@ class Reranker:
         if not documents:
             return [], []
         
+        # Ensure query is a string
+        query = str(query) if query is not None else ""
+        
+        # Ensure all documents are strings...
+        documents = [str(doc) if doc is not None else "" for doc in documents]
+        
         # Create (query, doc) pairs
         pairs = [[query, doc] for doc in documents]
         

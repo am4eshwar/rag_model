@@ -1,16 +1,23 @@
 import streamlit as st
 import os
+import logging
 from pathlib import Path
 import time
 from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 
+# Set up logging to show progress in terminal
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(module)s - %(levelname)s - %(message)s"
+)
+
 # Load RAG modules
 from batch_processor import BatchProcessor, ProcessingStatus, BatchStatus
 from document_queries import DocumentQuerySystem
 from plagiarism_detector import PlagiarismDetector
-from config import RAW_DOCS_DIR, DATA_DIR, INDEX_FILE_PATH, CHROMA_PERSIST_DIR
+from config import RAW_DOCS_DIR, DATA_DIR, INDEX_FILE_PATH, CHROMA_PERSIST_DIR, PROCESSED_DIR, INDEX_DIR, CACHE_DIR, METADATA_FILE_PATH
 
 # Load environment variables
 load_dotenv()
@@ -34,16 +41,18 @@ st.markdown("""
     }
     .stButton>button {
         width: 100%;
-        border-radius: 8px;
+        border-radius: 4px;
         height: 3em;
-        background-color: #262730;
-        color: #ffffff;
-        border: 1px solid #4B4B4B;
-        transition: all 0.3s;
+        background-color: #1f2937;
+        color: #f9fafb;
+        border: 1px solid #374151;
+        transition: background-color 0.2s, border-color 0.2s;
+        font-family: inherit;
+        font-weight: 500;
     }
     .stButton>button:hover {
-        background-color: #4B4B4B;
-        border-color: #FF4B4B;
+        background-color: #374151;
+        border-color: #3b82f6;
     }
     .card {
         padding: 1.5rem;
@@ -79,14 +88,26 @@ orch = get_orch()
 
 # Reset function
 def clear_vector_store():
-    # Delete FAISS index
+    import shutil
+    
+    # Delete FAISS index and metadata
     if INDEX_FILE_PATH.exists():
         os.remove(INDEX_FILE_PATH)
+    if METADATA_FILE_PATH.exists():
+        os.remove(METADATA_FILE_PATH)
     
     # Delete Chroma DB
     if CHROMA_PERSIST_DIR.exists():
-        import shutil
         shutil.rmtree(CHROMA_PERSIST_DIR)
+        
+    # Clear raw documents, processed chunks, and cache to start fresh
+    for dir_path in [RAW_DOCS_DIR, PROCESSED_DIR, CACHE_DIR]:
+        if dir_path.exists():
+            for item in dir_path.iterdir():
+                if item.is_file():
+                    item.unlink()
+                elif item.is_dir():
+                    shutil.rmtree(item)
     
     # Reset objects
     st.cache_resource.clear()
@@ -101,11 +122,21 @@ with st.sidebar:
     st.title("🧠 RAG Pipeline")
     st.markdown("---")
     
-    navigation = st.radio(
-        "Navigation",
-        ["Upload & Process", "Query & Compare", "Similarity Check"],
-        index=0
-    )
+    if "navigation" not in st.session_state:
+        st.session_state.navigation = "Upload & Process"
+        
+    st.subheader("Features")
+    
+    if st.button("Document Upload & OCR"):
+        st.session_state.navigation = "Upload & Process"
+    
+    if st.button("Document Semantics & Query"):
+        st.session_state.navigation = "Query & Compare"
+        
+    if st.button("Document Similarity & Plagiarism"):
+        st.session_state.navigation = "Similarity Check"
+        
+    navigation = st.session_state.navigation
     
     st.markdown("---")
     st.subheader("Settings")
